@@ -251,7 +251,8 @@ class MexcBot:
         
         print(f"Текущая цена: {current_price} USDC")
         needed_amount = QUANTITY * current_price
-        usdc_balance = self.get_asset_balance('USDC')['free']
+        usdc_balance = self.get_asset_balance('USDC')
+        usdc_balance = usdc_balance['free']
         if usdc_balance < needed_amount:
             print("Недостаточно средств на балансе!")
         else:
@@ -298,15 +299,16 @@ class MexcBot:
                 print("Сигнал на покупку")
                 #TODO: Изменить цену покупки на более низкую
                 order = self.create_order(SYMBOL, 'BUY', QUANTITY, current_price)
-                
                 if order and 'orderId' in order:
                     print(f"Ордер на покупку размещен: {order}")
-                    
-                    # Place take-profit order
+                    while order.get('status') != 'filled':
+                        print('Ордер на покупку еще не заполнен')
+                        time.sleep(5)
+                        # Place take-profit order
                     take_profit_price = self.calculate_profit_price(current_price=current_price)
                     time.sleep(2)  # Wait for buy order to potentially execute
                     tp_order = self.create_order(SYMBOL, 'SELL', QUANTITY, take_profit_price)
-                    
+                        
                     if tp_order and 'orderId' in tp_order:
                         print(f"Ордер на тейк-профит размещен: {tp_order}")
                     else:
@@ -322,12 +324,5 @@ class MexcBot:
 if __name__ == '__main__':
     bot = MexcBot()
     while True:
-        try:
             bot.run_strategy()
             time.sleep(5)  # Check every 5 sec
-        except KeyboardInterrupt:
-            print("Бот принудительно остановлен")
-            break
-        except Exception as e:
-            print(f"Unexpected error: {e}")
-            time.sleep(60)
