@@ -234,7 +234,7 @@ class MexcBot:
             response.raise_for_status()
             return response.json()
         except Exception as e:
-            print(f"Error checking open orders: {e}")
+            print(f"Ошибка при проверке открытых ордеров: {e}")
             return []
     
     def calculate_profit_price(self, current_price):
@@ -259,7 +259,7 @@ class MexcBot:
             # Check open orders
             open_orders = self.check_open_orders(SYMBOL)
             if len(open_orders) > 0:
-                print(f"Already have {len(open_orders)} open orders, skipping...")
+                print(f"Уже есть {len(open_orders)} открытых ордеров")
                 return
             
             # Get indicator data
@@ -301,7 +301,7 @@ class MexcBot:
                 order = self.create_order(SYMBOL, 'BUY', QUANTITY, current_price)
                 if order and 'orderId' in order:
                     print(f"Ордер на покупку размещен: {order}")
-                    while order.get('status') != 'filled':
+                    while order['status'] != 'FILLED':
                         print('Ордер на покупку еще не заполнен')
                         time.sleep(5)
                         # Place take-profit order
