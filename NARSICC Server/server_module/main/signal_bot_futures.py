@@ -5,13 +5,23 @@ import pandas as pd
 import pandas_ta as ta
 from pybit.unified_trading import HTTP
 import time
+import logging
+
+# --- Настройка логгирования ---
+
+logging.basicConfig(
+    filename='futures_bot_loggs.log',
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
 
 # --- Настройки API и торговли ---
 API_KEY = "w6FuoaEMJvfJVCgspY"
 API_SECRET = "ePuwMYEgfNo7p4BZl47IJE5wedV6Q0FfcLvY"
 SYMBOL = "XRP/USDT"
 LEVERAGE = "2"
-ORDER_QTY = 2
+ORDER_QTY = 4
 EMA_LENGTH = 100
 TP_PCT = 0.005
 SL_PCT = 0.05
@@ -71,7 +81,10 @@ def get_indicators():
         return None
 
 def set_leverage():
-    session.set_leverage(category="linear", symbol=SYMBOL.replace("/", ""), buy_leverage=LEVERAGE, sell_leverage=LEVERAGE)
+    try:
+        session.set_leverage(category="linear", symbol=SYMBOL.replace("/", ""), buy_leverage=LEVERAGE, sell_leverage=LEVERAGE)
+    except:
+        return None
 
 def open_trade(side, price):
     tp = round(price * (1 + TP_PCT) if side == "Buy" else price * (1 - TP_PCT), 4)
@@ -87,6 +100,7 @@ def open_trade(side, price):
         stop_loss=str(sl)
     )
     log(f"Открыта {side} позиция по {price} | TP: {tp} | SL: {sl}")
+    logging.info(f"Открыта {side} позиция по {price} | TP: {tp} | SL: {sl}")
     return price
 
 def try_dca(current_price):
@@ -104,6 +118,7 @@ def try_dca(current_price):
 
     if should_dca:
         log(f"📉 Усреднение: цена ушла на {trigger_pct*100:.1f}% от средней")
+        logging.info(f"📉 Усреднение: цена ушла на {trigger_pct*100:.1f}% от средней")
         new_entry = open_trade(side, current_price)
         position_data["entry_prices"].append(new_entry)
         position_data["dca_count"] += 1
@@ -114,6 +129,7 @@ def run_bot():
         indicators = get_indicators()
         if not indicators:
             log("Ошибка при получении индикаторов")
+            logging.error("Ошибка при получении индикаторов")
             time.sleep(60)
             continue
 
@@ -125,6 +141,7 @@ def run_bot():
         cci1h = indicators["cci_1h"]
 
         log(f"Цена: {price}, EMA: {ema}, RSI: {rsi1:.1f}, {rsi5:.1f}, {rsi30:.1f}, CCI: {cci1h:.1f}")
+        logging.info(f"Цена: {price}, EMA: {ema}, RSI: {rsi1:.1f}, {rsi5:.1f}, {rsi30:.1f}, CCI: {cci1h:.1f}")
 
         if position_data["side"] is not None:
             try_dca(price)
@@ -133,6 +150,7 @@ def run_bot():
 
         if not check_balance(min_required=price * ORDER_QTY / float(LEVERAGE)):
             log("❌ Недостаточно средств для входа")
+            logging.error("❌ Недостаточно средств для входа")
             time.sleep(60)
             continue
 
@@ -144,8 +162,9 @@ def run_bot():
             position_data.update({"side": "Sell", "entry_prices": [entry], "dca_count": 0})
         else:
             log("Нет сигнала на вход")
+            logging.info("Нет сигнала на вход")
 
-        time.sleep(60)
+        time.sleep(30)
 
 # --- Запуск ---
 if __name__ == "__main__":

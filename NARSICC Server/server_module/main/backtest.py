@@ -3,16 +3,16 @@ import pandas as pd
 import pandas_ta as ta
 from datetime import datetime
 import matplotlib.pyplot as plt
-
+#XRP, SOL, TRX, BNB
 # --- Настройки стратегии ---
 SYMBOL = "XRP/USDT"
 TIMEFRAME = "1m"
-START_DATE = "2025-01-08"
+START_DATE = "2025-04-08"
 END_DATE = "2025-05-08"
 
-INITIAL_BALANCE = 1000  # Начальный баланс USDT
+INITIAL_BALANCE = 20  # Начальный баланс USDT
 LEVERAGE = 1
-ORDER_QTY = 50  # Количество монет
+ORDER_QTY = 2  # Количество монет
 TP_PCT = 0.005  # Тейк-профит 0.5%
 SL_PCT = 0.05   # Стоп-лосс 5%
 EMA_LENGTH = 100
@@ -75,7 +75,7 @@ def backtest(df, balance, leverage, order_qty):
         cci_1h = row["cci_1h"]
         # Условия для лонга
         if position is None:
-            if price > ema_trend and rsi_1m < 55 and rsi_5m < 55 and rsi_30m < 65 and cci_1h < 85:
+            if price > ema_trend and rsi_1m < 65 and rsi_5m < 65 and rsi_30m < 65 and cci_1h < 85:
                 position = {
                     "type": "long",
                     "entry_prices": [price],
@@ -86,7 +86,7 @@ def backtest(df, balance, leverage, order_qty):
                 stats["total_trades"] += 1
                 stats["longs"] += 1
             # Условия для шорта
-        elif price < ema_trend and rsi_1m > 60 and rsi_5m > 60 and rsi_30m > 60 and cci_1h > -85:
+        elif price < ema_trend and rsi_1m > 55 and rsi_5m > 55 and rsi_30m > 45 and cci_1h > -85:
                 position = {
                     "type": "short",
                     "entry_prices": [price],
@@ -186,7 +186,7 @@ if __name__ == "__main__":
 
     plt.figure(figsize=(10, 5))
     plt.plot(equity_curve, label='Баланс')
-    plt.title("График баланса")
+    plt.title(f"График баланса. Торговая пара: {SYMBOL}")
     plt.xlabel("Сделка №")
     plt.ylabel("Баланс (USDT)")
     plt.grid(True)
